@@ -167,11 +167,6 @@ install(
     DESTINATION include/${PROJECT_NAME}
 )
 
-install(
-    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/icons"
-    DESTINATION "share/${PROJECT_NAME}"
-)
-
 
 
 # ==============================================================================
