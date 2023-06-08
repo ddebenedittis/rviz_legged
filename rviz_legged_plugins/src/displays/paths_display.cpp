@@ -31,6 +31,7 @@
 #include "rviz_legged_plugins/displays/paths_display.hpp"
 
 #include <algorithm>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -51,9 +52,7 @@
 
 #include "rviz_rendering/material_manager.hpp"
 
-namespace rviz_legged_plugins
-{
-namespace displays
+namespace rviz_legged_plugins::displays
 {
 
 PathsDisplay::PathsDisplay(rviz_common::DisplayContext * context)
@@ -67,7 +66,7 @@ PathsDisplay::PathsDisplay(rviz_common::DisplayContext * context)
 
 PathsDisplay::PathsDisplay()
 {
-    style_property_ = new rviz_common::properties::EnumProperty(
+    style_property_ = std::make_unique<rviz_common::properties::EnumProperty>(
         "Line Style", "Lines",
         "The rendering operation to use to draw the grid lines.",
         this, SLOT(updateStyle()));
@@ -75,34 +74,34 @@ PathsDisplay::PathsDisplay()
     style_property_->addOption("Lines", LINES);
     style_property_->addOption("Billboards", BILLBOARDS);
 
-    line_width_property_ = new rviz_common::properties::FloatProperty(
-        "Line Width", 0.03f,
+    line_width_property_ = std::make_unique<rviz_common::properties::FloatProperty>(
+        "Line Width", 0.03F,
         "The width, in meters, of each path line."
         "Only works with the 'Billboards' style.",
         this, SLOT(updateLineWidth()), this);
-    line_width_property_->setMin(0.001f);
+    line_width_property_->setMin(0.001F);
     line_width_property_->hide();
 
-    color_property_ = new rviz_common::properties::ColorProperty(
+    color_property_ = std::make_unique<rviz_common::properties::ColorProperty>(
         "Color", QColor(25, 255, 0),
         "Color to draw the path.", this);
 
-    alpha_property_ = new rviz_common::properties::FloatProperty(
+    alpha_property_ = std::make_unique<rviz_common::properties::FloatProperty>(
         "Alpha", 1.0,
         "Amount of transparency to apply to the path.", this);
 
-    buffer_length_property_ = new rviz_common::properties::IntProperty(
+    buffer_length_property_ = std::make_unique<rviz_common::properties::IntProperty>(
         "Buffer Length", 1,
         "Number of paths to display.",
         this, SLOT(updateBufferLength()));
     buffer_length_property_->setMin(1);
 
-    offset_property_ = new rviz_common::properties::VectorProperty(
+    offset_property_ = std::make_unique<rviz_common::properties::VectorProperty>(
         "Offset", Ogre::Vector3::ZERO,
         "Allows you to offset the path from the origin of the reference frame.  In meters.",
         this, SLOT(updateOffset()));
 
-    pose_style_property_ = new rviz_common::properties::EnumProperty(
+    pose_style_property_ = std::make_unique<rviz_common::properties::EnumProperty>(
         "Pose Style", "None",
         "Shape to display the pose as.",
         this, SLOT(updatePoseStyle()));
@@ -110,40 +109,40 @@ PathsDisplay::PathsDisplay()
     pose_style_property_->addOption("Axes", AXES);
     pose_style_property_->addOption("Arrows", ARROWS);
 
-    pose_axes_length_property_ = new rviz_common::properties::FloatProperty(
-        "Length", 0.3f,
+    pose_axes_length_property_ = std::make_unique<rviz_common::properties::FloatProperty>(
+        "Length", 0.3F,
         "Length of the axes.",
         this, SLOT(updatePoseAxisGeometry()) );
-    pose_axes_radius_property_ = new rviz_common::properties::FloatProperty(
-        "Radius", 0.03f,
+    pose_axes_radius_property_ = std::make_unique<rviz_common::properties::FloatProperty>(
+        "Radius", 0.03F,
         "Radius of the axes.",
         this, SLOT(updatePoseAxisGeometry()) );
 
-    pose_arrow_color_property_ = new rviz_common::properties::ColorProperty(
+    pose_arrow_color_property_ = std::make_unique<rviz_common::properties::ColorProperty>(
         "Pose Color",
         QColor(255, 85, 255),
         "Color to draw the poses.",
         this, SLOT(updatePoseArrowColor()));
-    pose_arrow_shaft_length_property_ = new rviz_common::properties::FloatProperty(
+    pose_arrow_shaft_length_property_ = std::make_unique<rviz_common::properties::FloatProperty>(
         "Shaft Length",
-        0.1f,
+        0.1F,
         "Length of the arrow shaft.",
         this,
         SLOT(updatePoseArrowGeometry()));
-    pose_arrow_head_length_property_ = new rviz_common::properties::FloatProperty(
-        "Head Length", 0.2f,
+    pose_arrow_head_length_property_ = std::make_unique<rviz_common::properties::FloatProperty>(
+        "Head Length", 0.2F,
         "Length of the arrow head.",
         this,
         SLOT(updatePoseArrowGeometry()));
-    pose_arrow_shaft_diameter_property_ = new rviz_common::properties::FloatProperty(
+    pose_arrow_shaft_diameter_property_ = std::make_unique<rviz_common::properties::FloatProperty>(
         "Shaft Diameter",
-        0.1f,
+        0.1F,
         "Diameter of the arrow shaft.",
         this,
         SLOT(updatePoseArrowGeometry()));
-    pose_arrow_head_diameter_property_ = new rviz_common::properties::FloatProperty(
+    pose_arrow_head_diameter_property_ = std::make_unique<rviz_common::properties::FloatProperty>(
         "Head Diameter",
-        0.3f,
+        0.3F,
         "Diameter of the arrow head.",
         this,
         SLOT(updatePoseArrowGeometry()));
@@ -156,7 +155,7 @@ PathsDisplay::PathsDisplay()
     pose_arrow_head_diameter_property_->hide();
 
     static int count = 0;
-    std::string material_name = "LinesMaterial" + std::to_string(count++);
+    std::string material_name = "PathsLinesMaterial" + std::to_string(count++);
     lines_material_ = rviz_rendering::MaterialManager::createMaterialWithNoLighting(material_name);
 }
 
@@ -180,38 +179,32 @@ void PathsDisplay::reset()
 }
 
 
-void PathsDisplay::allocateAxesVector(std::vector<rviz_rendering::Axes *> & axes_vect, size_t num)
+void PathsDisplay::allocateAxesVector(std::vector<std::unique_ptr<rviz_rendering::Axes>> & axes_vect, size_t num)
 {
     auto vector_size = axes_vect.size();
     if (num > vector_size) {
         axes_vect.reserve(num);
         for (auto i = vector_size; i < num; ++i) {
         axes_vect.push_back(
-            new rviz_rendering::Axes(
+            std::make_unique<rviz_rendering::Axes>(
             scene_manager_, scene_node_,
             pose_axes_length_property_->getFloat(),
             pose_axes_radius_property_->getFloat()));
         }
     } else if (num < vector_size) {
-        for (auto i = num; i < vector_size; ++i) {
-        delete axes_vect[i];
-        }
         axes_vect.resize(num);
     }
 }
 
-void PathsDisplay::allocateArrowVector(std::vector<rviz_rendering::Arrow *> & arrow_vect, size_t num)
+void PathsDisplay::allocateArrowVector(std::vector<std::unique_ptr<rviz_rendering::Arrow>> & arrow_vect, size_t num)
 {
     auto vector_size = arrow_vect.size();
     if (num > vector_size) {
         arrow_vect.reserve(num);
         for (auto i = vector_size; i < num; ++i) {
-        arrow_vect.push_back(new rviz_rendering::Arrow(scene_manager_, scene_node_));
+        arrow_vect.push_back(std::make_unique<rviz_rendering::Arrow>(scene_manager_, scene_node_));
         }
     } else if (num < vector_size) {
-        for (auto i = num; i < vector_size; ++i) {
-        delete arrow_vect[i];
-        }
         arrow_vect.resize(num);
     }
 }
@@ -251,7 +244,7 @@ void PathsDisplay::updateLineWidth()
     float line_width = line_width_property_->getFloat();
 
     if (style == BILLBOARDS) {
-        for (auto billboard_line : billboard_lines_) {
+        for (auto& billboard_line : billboard_lines_) {
         if (billboard_line) {
             billboard_line->setLineWidth(line_width);
         }
@@ -318,7 +311,7 @@ void PathsDisplay::updatePoseArrowColor()
 
     for (auto & arrow_vect : arrow_chain_) {
         for (auto & arrow : arrow_vect) {
-        arrow->setColor(color.redF(), color.greenF(), color.blueF(), 1.0f);
+        arrow->setColor(color.redF(), color.greenF(), color.blueF(), 1.0F);
         }
     }
     context_->queueRender();
@@ -341,16 +334,13 @@ void PathsDisplay::updatePoseArrowGeometry()
 void PathsDisplay::destroyObjects()
 {
     // Destroy all simple lines, if any
-    for (auto manual_object : manual_objects_) {
+    for (auto * manual_object : manual_objects_) {
         manual_object->clear();
         scene_manager_->destroyManualObject(manual_object);
     }
     manual_objects_.clear();
 
     // Destroy all billboards, if any
-    for (auto billboard_line : billboard_lines_) {
-        delete billboard_line;  // also destroys the corresponding scene node
-    }
     billboard_lines_.clear();
 }
 
@@ -372,7 +362,7 @@ void PathsDisplay::updateBufferLength()
         case LINES:  // simple lines with fixed width of 1px
         manual_objects_.reserve(buffer_length);
         for (size_t i = 0; i < buffer_length; i++) {
-            auto manual_object = scene_manager_->createManualObject();
+            auto * manual_object = scene_manager_->createManualObject();
             manual_object->setDynamic(true);
             scene_node_->attachObject(manual_object);
 
@@ -383,8 +373,9 @@ void PathsDisplay::updateBufferLength()
         case BILLBOARDS:  // billboards with configurable width
         billboard_lines_.reserve(buffer_length);
         for (size_t i = 0; i < buffer_length; i++) {
-            auto billboard_line = new rviz_rendering::BillboardLine(scene_manager_, scene_node_);
-            billboard_lines_.push_back(billboard_line);
+            billboard_lines_.push_back(
+                std::make_unique<rviz_rendering::BillboardLine>(scene_manager_, scene_node_)
+            );
         }
         break;
     }
@@ -401,7 +392,7 @@ bool validateFloats(const nav_msgs::msg::Path & msg)
 
 void PathsDisplay::processMessage(rviz_legged_msgs::msg::Paths::ConstSharedPtr msg)
 {
-    number_paths_ = msg->paths.size();
+    number_paths_ = static_cast<int>(msg->paths.size());
     updateBufferLength();
 
     for (int i = 0; i < number_paths_; i++) {
@@ -419,7 +410,7 @@ void PathsDisplay::processMessage(rviz_legged_msgs::msg::Paths::ConstSharedPtr m
             break;
 
             case BILLBOARDS:
-            billboard_line = billboard_lines_[i];
+            billboard_line = billboard_lines_[i].get();
             billboard_line->clear();
             break;
         }
@@ -471,7 +462,7 @@ void PathsDisplay::updateManualObject(
     manual_object->begin(
         lines_material_->getName(), Ogre::RenderOperation::OT_LINE_STRIP, "rviz_rendering");
 
-    for (auto pose_stamped : msg.poses) {
+    for (const auto & pose_stamped : msg.poses) {
         manual_object->position(transform * rviz_common::pointMsgToOgre(pose_stamped.pose.position));
         rviz_rendering::MaterialManager::enableAlphaBlending(lines_material_, color.a);
         manual_object->colour(color);
@@ -491,7 +482,7 @@ void PathsDisplay::updateBillBoardLine(
     billboard_line->setMaxPointsPerLine(static_cast<uint32_t>(msg.poses.size()));
     billboard_line->setLineWidth(line_width_property_->getFloat());
 
-    for (auto pose_stamped : msg.poses) {
+    for (const auto & pose_stamped : msg.poses) {
         Ogre::Vector3 xpos = transform * rviz_common::pointMsgToOgre(pose_stamped.pose.position);
         billboard_line->addPoint(xpos, color);
     }
@@ -513,7 +504,7 @@ void PathsDisplay::updatePoseMarkers(
 }
 
 void PathsDisplay::updateAxesMarkers(
-    std::vector<rviz_rendering::Axes *> & axes_vect, nav_msgs::msg::Path& msg,
+    std::vector<std::unique_ptr<rviz_rendering::Axes>> & axes_vect, nav_msgs::msg::Path& msg,
     const Ogre::Matrix4 & transform)
 {
     auto num_points = msg.poses.size();
@@ -531,14 +522,14 @@ void PathsDisplay::updateAxesMarkers(
 }
 
 void PathsDisplay::updateArrowMarkers(
-    std::vector<rviz_rendering::Arrow *> & arrow_vect, nav_msgs::msg::Path& msg,
+    std::vector<std::unique_ptr<rviz_rendering::Arrow>> & arrow_vect, nav_msgs::msg::Path& msg,
     const Ogre::Matrix4 & transform)
 {
     auto num_points = msg.poses.size();
     allocateArrowVector(arrow_vect, num_points);
     for (size_t i = 0; i < num_points; ++i) {
         QColor color = pose_arrow_color_property_->getColor();
-        arrow_vect[i]->setColor(color.redF(), color.greenF(), color.blueF(), 1.0f);
+        arrow_vect[i]->setColor(color.redF(), color.greenF(), color.blueF(), 1.0F);
 
         arrow_vect[i]->set(
         pose_arrow_shaft_length_property_->getFloat(),
@@ -558,7 +549,6 @@ void PathsDisplay::updateArrowMarkers(
     }
 }
 
-}  // namespace displays
 }  // namespace rviz_legged_plugins
 
 #include <pluginlib/class_list_macros.hpp>  // NOLINT

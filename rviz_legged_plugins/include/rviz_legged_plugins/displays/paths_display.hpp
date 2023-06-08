@@ -30,6 +30,7 @@
 
 #pragma once
 
+#include <memory>
 #include <vector>
 
 #include "rviz_legged_msgs/msg/paths.hpp"
@@ -47,21 +48,16 @@ namespace Ogre
 class ManualObject;
 }
 
-namespace rviz_common
-{
-namespace properties
+namespace rviz_common::properties
 {
 class ColorProperty;
 class FloatProperty;
 class IntProperty;
 class EnumProperty;
 class VectorProperty;
-}
 }  // namespace rviz_common
 
-namespace rviz_legged_plugins
-{
-namespace displays
+namespace rviz_legged_plugins::displays
 {
 /**
  * \class PathsDisplay
@@ -101,8 +97,8 @@ private Q_SLOTS:
 
 private:
     void destroyObjects();
-    void allocateArrowVector(std::vector<rviz_rendering::Arrow *> & arrow_vect, size_t num);
-    void allocateAxesVector(std::vector<rviz_rendering::Axes *> & axes_vect, size_t num);
+    void allocateArrowVector(std::vector<std::unique_ptr<rviz_rendering::Arrow>> & arrow_vect, size_t num);
+    void allocateAxesVector(std::vector<std::unique_ptr<rviz_rendering::Axes>> & axes_vect, size_t num);
     void destroyPoseAxesChain();
     void destroyPoseArrowChain();
     void updateManualObject(
@@ -114,26 +110,26 @@ private:
     void updatePoseMarkers(
         size_t buffer_index, nav_msgs::msg::Path& msg, const Ogre::Matrix4 & transform);
     void updateAxesMarkers(
-        std::vector<rviz_rendering::Axes *> & axes_vect, nav_msgs::msg::Path& msg,
+        std::vector<std::unique_ptr<rviz_rendering::Axes>> & axes_vect, nav_msgs::msg::Path& msg,
         const Ogre::Matrix4 & transform);
     void updateArrowMarkers(
-        std::vector<rviz_rendering::Arrow *> & arrow_vect, nav_msgs::msg::Path& msg,
+        std::vector<std::unique_ptr<rviz_rendering::Arrow>> & arrow_vect, nav_msgs::msg::Path& msg,
         const Ogre::Matrix4 & transform);
 
-    int number_paths_ = 1;
+    int number_paths_ = 0;
 
     std::vector<Ogre::ManualObject *> manual_objects_;
-    std::vector<rviz_rendering::BillboardLine *> billboard_lines_;
-    std::vector<std::vector<rviz_rendering::Axes *>> axes_chain_;
-    std::vector<std::vector<rviz_rendering::Arrow *>> arrow_chain_;
+    std::vector<std::unique_ptr<rviz_rendering::BillboardLine>> billboard_lines_;
+    std::vector<std::vector<std::unique_ptr<rviz_rendering::Axes>>> axes_chain_;
+    std::vector<std::vector<std::unique_ptr<rviz_rendering::Arrow>>> arrow_chain_;
     Ogre::MaterialPtr lines_material_;
 
-    rviz_common::properties::EnumProperty * style_property_;
-    rviz_common::properties::ColorProperty * color_property_;
-    rviz_common::properties::FloatProperty * alpha_property_;
-    rviz_common::properties::FloatProperty * line_width_property_;
-    rviz_common::properties::IntProperty * buffer_length_property_;
-    rviz_common::properties::VectorProperty * offset_property_;
+    std::unique_ptr<rviz_common::properties::EnumProperty> style_property_;
+    std::unique_ptr<rviz_common::properties::ColorProperty> color_property_;
+    std::unique_ptr<rviz_common::properties::FloatProperty> alpha_property_;
+    std::unique_ptr<rviz_common::properties::FloatProperty> line_width_property_;
+    std::unique_ptr<rviz_common::properties::IntProperty> buffer_length_property_;
+    std::unique_ptr<rviz_common::properties::VectorProperty> offset_property_;
 
     enum LineStyle
     {
@@ -142,14 +138,14 @@ private:
     };
 
     // pose marker property
-    rviz_common::properties::EnumProperty * pose_style_property_;
-    rviz_common::properties::FloatProperty * pose_axes_length_property_;
-    rviz_common::properties::FloatProperty * pose_axes_radius_property_;
-    rviz_common::properties::ColorProperty * pose_arrow_color_property_;
-    rviz_common::properties::FloatProperty * pose_arrow_shaft_length_property_;
-    rviz_common::properties::FloatProperty * pose_arrow_head_length_property_;
-    rviz_common::properties::FloatProperty * pose_arrow_shaft_diameter_property_;
-    rviz_common::properties::FloatProperty * pose_arrow_head_diameter_property_;
+    std::unique_ptr<rviz_common::properties::EnumProperty> pose_style_property_;
+    std::unique_ptr<rviz_common::properties::FloatProperty> pose_axes_length_property_;
+    std::unique_ptr<rviz_common::properties::FloatProperty> pose_axes_radius_property_;
+    std::unique_ptr<rviz_common::properties::ColorProperty> pose_arrow_color_property_;
+    std::unique_ptr<rviz_common::properties::FloatProperty> pose_arrow_shaft_length_property_;
+    std::unique_ptr<rviz_common::properties::FloatProperty> pose_arrow_head_length_property_;
+    std::unique_ptr<rviz_common::properties::FloatProperty> pose_arrow_shaft_diameter_property_;
+    std::unique_ptr<rviz_common::properties::FloatProperty> pose_arrow_head_diameter_property_;
 
     enum PoseStyle
     {
@@ -159,5 +155,4 @@ private:
     };
 };
 
-}  // namespace displays
 }  // namespace rviz_legged_plugins
