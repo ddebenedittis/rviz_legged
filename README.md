@@ -8,8 +8,8 @@ Packages for displaying legged robots in RViz 2.
 - `friction_cones_display` displays a vector of friction cones at the contact points.
 - `paths_display` displays a vector of foot paths computed.
 
-<img src="https://raw.githubusercontent.com/ddebenedittis/media/main/rviz_legged/gif/rviz_legged_walk.gif" width="500">
-<img src="https://raw.githubusercontent.com/ddebenedittis/media/main/rviz_legged/gif/rviz_legged_trot.gif" width="500">
+<img src="https://raw.githubusercontent.com/ddebenedittis/media/main/rviz_legged/rviz_legged_walk.webp" width="500">
+<img src="https://raw.githubusercontent.com/ddebenedittis/media/main/rviz_legged/rviz_legged_trot.webp" width="500">
 
 ## Author
 
