@@ -37,7 +37,8 @@ find_package(Qt5 REQUIRED COMPONENTS Widgets Test)
 
 find_package(rviz_legged_msgs REQUIRED)
 
-find_package(ignition-math6 REQUIRED)
+find_package(gz_math_vendor REQUIRED)
+find_package(gz-math REQUIRED)
 
 find_package(image_transport REQUIRED)
 find_package(interactive_markers REQUIRED)
@@ -98,7 +99,7 @@ target_link_libraries(${LIBRARY_NAME} PUBLIC
 )
 
 target_link_libraries(${LIBRARY_NAME} PRIVATE
-    ignition-math6
+    gz-math::core
 )
 
 # Causes the visibility macros to use dllexport rather than dllimport,
